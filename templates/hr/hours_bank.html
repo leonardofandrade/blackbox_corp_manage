@@ -1,0 +1,170 @@
+{% extends "hr/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Banco de Horas{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-clock text-primary me-2"></i>Banco de Horas
+        </h1>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Buscar por nome ou matrícula"
+                               value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="unit" class="form-select">
+                        <option value="">Todas as Unidades</option>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}" 
+                                {% if request.GET.unit == unit.id|stringformat:"i" %}selected{% endif %}>
+                            {{ unit.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="balance" class="form-select">
+                        <option value="">Todos os Saldos</option>
+                        <option value="positive" {% if request.GET.balance == 'positive' %}selected{% endif %}>
+                            Saldo Positivo
+                        </option>
+                        <option value="negative" {% if request.GET.balance == 'negative' %}selected{% endif %}>
+                            Saldo Negativo
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hours Bank List -->
+    <div class="row">
+        {% for overtime_bank in overtime_banks %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ overtime_bank.employee.get_full_name }}</h5>
+                        <span class="badge {% if overtime_bank.balance.total_seconds > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ overtime_bank.get_balance_display }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text text-muted mb-1">
+                        <i class="fas fa-id-card me-2"></i>{{ overtime_bank.employee.registration_number }}
+                    </p>
+                    <p class="card-text text-muted mb-3">
+                        <i class="fas fa-building me-2"></i>{{ overtime_bank.employee.operational_unit.name }}
+                    </p>
+
+                    <small class="text-muted d-block">Última atualização:</small>
+                    <p class="mb-0">{{ overtime_bank.last_update|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button type="button" class="btn btn-primary w-100"
+                            data-bs-toggle="modal"
+                            data-bs-target="#adjustModal{{ overtime_bank.pk }}">
+                        <i class="fas fa-edit me-2"></i>Ajustar Saldo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Adjustment Modal -->
+            <div class="modal fade" id="adjustModal{{ overtime_bank.pk }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="employee_id" value="{{ overtime_bank.employee.id }}">
+                            
+                            <div class="modal-header">
+                                <h5 class="modal-title">Ajustar Banco de Horas</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Funcionário</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ overtime_bank.employee.get_full_name }}" readonly>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Saldo Atual</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ overtime_bank.get_balance_display }}" readonly>
+                                </div>
+
+                                {{ form|crispy }}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Salvar Ajuste
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <h5>Nenhum registro encontrado</h5>
+                    <p class="text-muted">Não há registros de banco de horas para exibir.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Navegação de páginas" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "hr/base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - {{ employee.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Section -->
+    <div class="profile-header text-center mb-4">
+        <h1 class="display-6">Bem-vindo(a), {{ employee.get_full_name }}</h1>
+        <p class="lead text-muted">{{ employee.operational_unit.name }}</p>
+    </div>
+
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-clock text-primary me-2"></i>Ações Rápidas
+                    </h5>
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'hr:attendance' %}" class="btn btn-primary">
+                            <i class="fas fa-clock me-2"></i>Registrar Ponto
+                        </a>
+                        <a href="{% url 'hr:employee_profile' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-edit me-2"></i>Atualizar Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overtime Bank Status -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-calendar-check text-primary me-2"></i>Banco de Horas
+                    </h5>
+                    <div class="text-center py-3">
+                        <h3 class="{% if overtime_bank.balance.total_seconds > 0 %}overtime-positive{% else %}overtime-negative{% endif %}">
+                            {{ overtime_bank.get_balance_display }}
+                        </h3>
+                        <p class="text-muted">Última atualização: {{ overtime_bank.last_update|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Time Records -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="fas fa-history text-primary me-2"></i>Registros Recentes
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th>Unidade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_records %}
+                        <tr>
+                            <td>{{ record.timestamp|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% if record.record_type == 'IN' %}
+                                    <span class="badge bg-success">Entrada</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Saída</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ record.operational_unit.name }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">
+                                Nenhum registro encontrado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

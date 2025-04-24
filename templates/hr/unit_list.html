@@ -1,0 +1,169 @@
+{% extends "hr/base.html" %}
+{% load static %}
+
+{% block title %}Unidades Operacionais{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-building text-primary me-2"></i>Unidades Operacionais
+        </h1>
+        <a href="{% url 'hr:unit_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nova Unidade
+        </a>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Buscar por nome ou endereço"
+                               value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>
+                            Ativas
+                        </option>
+                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>
+                            Inativas
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{% url 'hr:unit_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-2"></i>Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Units Grid -->
+    <div class="row">
+        {% for unit in units %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h5 class="card-title mb-0">{{ unit.name }}</h5>
+                        {% if unit.active %}
+                        <span class="badge bg-success">Ativa</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inativa</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text text-muted">
+                        <i class="fas fa-map-marker-alt me-2"></i>{{ unit.address }}
+                    </p>
+
+                    <div class="mt-3">
+                        <small class="text-muted">Funcionários vinculados:</small>
+                        <h4 class="mt-1">{{ unit.employee_set.count }}</h4>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'hr:unit_update' unit.pk %}" 
+                           class="btn btn-outline-primary"
+                           title="Editar">
+                            <i class="fas fa-edit me-2"></i>Editar
+                        </a>
+                        <button type="button" 
+                                class="btn btn-outline-danger" 
+                                data-bs-toggle="modal"
+                                data-bs-target="#deleteModal{{ unit.pk }}"
+                                title="Excluir">
+                            <i class="fas fa-trash me-2"></i>Excluir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Modal -->
+            <div class="modal fade" id="deleteModal{{ unit.pk }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar Exclusão</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Deseja realmente desativar a unidade <strong>{{ unit.name }}</strong>?</p>
+                            <p class="text-muted">Esta ação não pode ser desfeita e afetará todos os funcionários vinculados.</p>
+                            
+                            {% if unit.employee_set.exists %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Esta unidade possui {{ unit.employee_set.count }} funcionário(s) vinculado(s).
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                Cancelar
+                            </button>
+                            <form method="post" action="{% url 'hr:unit_delete' unit.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-2"></i>Desativar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5>Nenhuma unidade encontrada</h5>
+                    <p class="text-muted">Clique no botão "Nova Unidade" para começar.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Navegação de páginas" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

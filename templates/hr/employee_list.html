@@ -1,0 +1,185 @@
+{% extends "hr/base.html" %}
+{% load static %}
+
+{% block title %}Funcionários{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="fas fa-users text-primary me-2"></i>Funcionários
+        </h1>
+        <a href="{% url 'hr:employee_create' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-2"></i>Novo Funcionário
+        </a>
+    </div>
+
+    <!-- Search and Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Buscar por nome ou matrícula"
+                               value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="unit" class="form-select">
+                        <option value="">Todas as Unidades</option>
+                        {% for unit in units %}
+                        <option value="{{ unit.id }}" 
+                                {% if request.GET.unit == unit.id|stringformat:"i" %}selected{% endif %}>
+                            {{ unit.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>
+                            Ativos
+                        </option>
+                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>
+                            Inativos
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                    <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-2"></i>Limpar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Employees List -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Matrícula</th>
+                            <th>Nome</th>
+                            <th>Unidade</th>
+                            <th>Carga Horária</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>{{ employee.registration_number }}</td>
+                            <td>
+                                {{ employee.get_full_name }}
+                                {% if employee.is_manager %}
+                                <span class="badge bg-primary ms-2">Gestor</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ employee.operational_unit.name }}</td>
+                            <td>{{ employee.weekly_hours }}h</td>
+                            <td>
+                                {% if employee.active %}
+                                <span class="badge bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'hr:employee_update' employee.pk %}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ employee.pk }}"
+                                            title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Delete Modal -->
+                                <div class="modal fade" id="deleteModal{{ employee.pk }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmar Exclusão</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Deseja realmente desativar o funcionário 
+                                                   <strong>{{ employee.get_full_name }}</strong>?</p>
+                                                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    Cancelar
+                                                </button>
+                                                <form method="post" action="{% url 'hr:employee_delete' employee.pk %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="fas fa-trash me-2"></i>Desativar
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Nenhum funcionário encontrado
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Navegação de páginas" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

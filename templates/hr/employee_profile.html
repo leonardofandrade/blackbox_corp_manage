@@ -1,0 +1,110 @@
+{% extends "hr/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Meu Perfil - {{ employee.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-4">
+            <!-- Profile Info Card -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-circle fa-5x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{{ employee.get_full_name }}</h5>
+                    <p class="text-muted mb-1">Matrícula: {{ employee.registration_number }}</p>
+                    <p class="text-muted mb-1">{{ employee.operational_unit.name }}</p>
+                    
+                    {% if employee.is_manager %}
+                    <span class="badge bg-primary">Gestor</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Additional Info Card -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">Informações Adicionais</h6>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Carga Horária Semanal</small>
+                        <strong>{{ employee.weekly_hours }} horas</strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Data de Cadastro</small>
+                        <strong>{{ employee.created_at|date:"d/m/Y" }}</strong>
+                    </div>
+
+                    <div>
+                        <small class="text-muted d-block">Última Atualização</small>
+                        <strong>{{ employee.updated_at|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <!-- Profile Update Form -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-user-edit text-primary me-2"></i>Atualizar Perfil
+                    </h5>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.first_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.last_name|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.phone|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.address|as_crispy_field }}
+                        </div>
+
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>
+                            A matrícula e a unidade operacional só podem ser alteradas por um gestor.
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Salvar Alterações
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Password Change Link -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-lock text-primary me-2"></i>Segurança
+                    </h5>
+                    <p class="card-text">Para alterar sua senha, clique no botão abaixo:</p>
+                    <a href="{% url 'password_change' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-key me-2"></i>Alterar Senha
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

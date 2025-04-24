@@ -1,0 +1,81 @@
+{% extends "hr/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Cadastro - Sistema de Gestão de Funcionários{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center min-vh-75">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                    <h2 class="h4 mb-3">Criar Conta</h2>
+                    <p class="text-muted">Preencha os dados abaixo para se cadastrar</p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.first_name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.last_name|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.email|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.username|as_crispy_field }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.password1|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.password2|as_crispy_field }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.phone|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.address|as_crispy_field }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.operational_unit|as_crispy_field }}
+                    </div>
+
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Sua matrícula será atribuída por um gestor após a aprovação do cadastro.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-2"></i>Cadastrar
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-0">
+                        Já tem uma conta? 
+                        <a href="{% url 'login' %}" class="text-primary">Entrar</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

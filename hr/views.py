@@ -1,7 +1,33 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
+from datetime import datetime, timedelta
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_http_methods
+from django.db.models import Q
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic.edit import CreateView
+from .forms import (
+    RegistrationForm, EmployeeProfileForm, EmployeeForm,
+    OperationalUnitForm, TimeRecordForm, ClockInOutForm,
+    OvertimeBankUpdateForm
+)
+from .models import Employee, OperationalUnit, TimeRecord, OvertimeBank
+
+class RegisterView(CreateView):
+    form_class = RegistrationForm
+    template_name = 'hr/register.html'
+    success_url = reverse_lazy('login')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 
+            'Cadastro realizado com sucesso! Aguarde a aprovação do gestor para receber sua matrícula.')
+        return response
+
 from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime, timedelta
@@ -245,3 +271,12 @@ def hours_bank(request):
         'form': form
     }
     return render(request, 'hr/hours_bank.html', context)
+
+@ensure_csrf_cookie
+@require_http_methods(["GET", "POST"])
+def custom_logout(request):
+    """Custom logout view that handles both GET and POST requests securely"""
+    if request.user.is_authenticated:
+        logout(request)
+        messages.success(request, 'Você foi desconectado com sucesso.')
+    return redirect('login')

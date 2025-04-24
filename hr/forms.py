@@ -1,6 +1,70 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 from .models import Employee, OperationalUnit, TimeRecord, OvertimeBank
+
+class RegistrationForm(UserCreationForm):
+    first_name = forms.CharField(
+        label='Nome',
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Digite seu nome'})
+    )
+    last_name = forms.CharField(
+        label='Sobrenome',
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Digite seu sobrenome'})
+    )
+    email = forms.EmailField(
+        label='E-mail',
+        required=True,
+        widget=forms.EmailInput(attrs={'placeholder': 'Digite seu e-mail'})
+    )
+    phone = forms.CharField(
+        label='Telefone',
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': '(00) 00000-0000'})
+    )
+    address = forms.CharField(
+        label='Endereço',
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': 'Digite seu endereço completo'
+        }),
+        required=True
+    )
+    operational_unit = forms.ModelChoiceField(
+        label='Unidade Operacional',
+        queryset=OperationalUnit.objects.filter(active=True),
+        required=True
+    )
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        
+        if commit:
+            user.save()
+            # Create the associated Employee instance
+            Employee.objects.create(
+                user=user,
+                phone=self.cleaned_data['phone'],
+                address=self.cleaned_data['address'],
+                operational_unit=self.cleaned_data['operational_unit'],
+                registration_number='PENDING',  # Will be set by manager
+                weekly_hours=44.0,  # Default value
+                is_manager=False,
+                active=True
+            )
+        return user
 
 class EmployeeProfileForm(forms.ModelForm):
     """Form for employees to update their own profile (excluding registration number)"""

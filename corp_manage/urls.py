@@ -18,13 +18,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from django.urls import reverse_lazy
+from hr import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/login/', auth_views.LoginView.as_view(template_name='hr/login.html'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(
-        next_page=reverse_lazy('login')
-    ), name='logout'),
+    path('accounts/logout/', views.custom_logout, name='logout'),
     path('', include('hr.urls')),
 ]

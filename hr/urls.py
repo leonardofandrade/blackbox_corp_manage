@@ -4,6 +4,7 @@ from . import views
 app_name = 'hr'
 
 urlpatterns = [
+    path('register/', views.RegisterView.as_view(), name='register'),
     # Employee views
     path('', views.home, name='home'),
     path('perfil/', views.employee_profile, name='employee_profile'),
